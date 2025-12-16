@@ -2,9 +2,29 @@
 
 public class Player : MonoBehaviour
 {
-    // Thêm tốc độ chạy
+    [Header("Movement Settings")]
     [SerializeField] private float walkSpeed = 5f;
-    [SerializeField] private float runSpeed = 10f; // Tốc độ khi giữ Shift
+    [SerializeField] private float runSpeed = 10f;
+
+    [Header("Health Settings")]
+    [SerializeField] private int maxHealth = 100;
+    private int currentHealth;
+
+    [Header("Damage Settings")]
+    [SerializeField] private float hurtCooldown = 0.5f;
+    private float lastHurtTime = -999f;
+
+    [Header("Attack Settings")]
+    [SerializeField] private int attackDamage = 15;
+    [SerializeField] private int extraAttackDamage = 30;
+    [SerializeField] private float attackRange = 1.5f;
+    [SerializeField] private float comboResetTime = 0.3f;
+
+    private int clickCount = 0;
+    private float lastClickTime = 0f;
+
+    [Header("UI Settings")]
+    [SerializeField] private PlayerHealthUI healthUI;
 
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -15,66 +35,129 @@ public class Player : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
+
+        currentHealth = maxHealth;
+        healthUI.SetMaxHealth(maxHealth);
     }
 
     void Update()
     {
         MovePlayer();
-        HandleAttackInput(); // <--- GỌI HÀM XỬ LÝ TẤN CÔNG Ở ĐÂY
+        HandleAttackInput();
     }
 
     void MovePlayer()
     {
         Vector2 playerInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
-        // --- 1. Xử lý Input và Tốc độ ---
-        bool isMoving = playerInput.magnitude > 0.1f; // Dùng 0.1f để tránh lỗi float nhỏ
+        bool isMoving = playerInput.magnitude > 0.1f;
         bool isRunningInput = Input.GetKey(KeyCode.LeftShift);
 
         float currentMoveSpeed = walkSpeed;
         bool isCurrentlyRunning = false;
 
-        // Xác định Tốc độ
         if (isRunningInput && isMoving)
         {
-            // Nếu nhấn Shift VÀ đang di chuyển
             currentMoveSpeed = runSpeed;
             isCurrentlyRunning = true;
         }
         else if (isMoving)
         {
-            // Chỉ đi bộ
             currentMoveSpeed = walkSpeed;
         }
 
-        // --- 2. Di chuyển nhân vật ---
         rb.linearVelocity = playerInput.normalized * currentMoveSpeed;
 
-        // --- 3. Lật nhân vật (Flip) ---
         if (playerInput.x < 0)
-        {
             spriteRenderer.flipX = true;
-        }
         else if (playerInput.x > 0)
-        {
             spriteRenderer.flipX = false;
-        }
 
-        // --- 4. Cập nhật Animator ---
         animator.SetBool("isWalk", isMoving);
         animator.SetBool("isRun", isCurrentlyRunning);
     }
 
-    // Hàm mới để xử lý Input Tấn công
     void HandleAttackInput()
     {
-        // Kiểm tra nếu người chơi nhấn nút Tấn công (Ví dụ: Chuột trái)
         if (Input.GetMouseButtonDown(0))
         {
-            // Kích hoạt duy nhất một Trigger "Attack".
-            // Animator sẽ tự động chọn Transition (Idle->Attack, Walk->Walk Attack, Run->Run Attack)
-            // dựa trên trạng thái hiện tại của nhân vật.
-            animator.SetTrigger("Attack");
+            clickCount++;
+            lastClickTime = Time.time;
+
+            if (clickCount == 1)
+            {
+                animator.SetTrigger("Attack");
+                PerformAttack(attackDamage, attackRange);
+            }
+            else if (clickCount == 2 && Time.time - lastClickTime <= comboResetTime)
+            {
+                animator.SetTrigger("AttackExtra");
+                PerformAttack(extraAttackDamage, attackRange);
+                clickCount = 0; // reset combo sau khi đánh extra
+            }
         }
+
+        if (Time.time - lastClickTime > comboResetTime)
+        {
+            clickCount = 0;
+        }
+    }
+
+    void PerformAttack(int damage, float range)
+    {
+        // Xác định hướng nhân vật
+        bool isFacingRight = !spriteRenderer.flipX;
+
+        // Tính vị trí vùng đánh phía trước mặt
+        Vector2 attackOrigin = (Vector2)transform.position + new Vector2(isFacingRight ? range * 0.5f : -range * 0.5f, 0);
+        Vector2 boxSize = new Vector2(range, 1f); // vùng đánh hình chữ nhật
+
+        // Kiểm tra enemy trong vùng đánh
+        Collider2D[] hits = Physics2D.OverlapBoxAll(attackOrigin, boxSize, 0f);
+        foreach (var hit in hits)
+        {
+            Enemy enemy = hit.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(damage);
+            }
+        }
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (Time.time - lastHurtTime < hurtCooldown) return;
+        lastHurtTime = Time.time;
+
+        currentHealth -= damage;
+        animator.SetTrigger("Hurt");
+        Debug.Log("Player takes " + damage + " damage! Current HP: " + currentHealth);
+
+        healthUI.SetHealth(currentHealth);
+
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        animator.SetTrigger("Die");
+        Debug.Log("Player has died!");
+        // Thêm logic Game Over tại đây
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+
+        if (spriteRenderer == null) return;
+        bool isFacingRight = !spriteRenderer.flipX;
+
+        Vector2 attackOrigin = (Vector2)transform.position + new Vector2(isFacingRight ? attackRange * 0.5f : -attackRange * 0.5f, 0);
+        Vector2 boxSize = new Vector2(attackRange, 1f);
+
+        Gizmos.DrawWireCube(attackOrigin, boxSize);
     }
 }
