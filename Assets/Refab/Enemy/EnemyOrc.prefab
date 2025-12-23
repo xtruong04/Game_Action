@@ -151,14 +151,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ad7e6df7b354e84c8d70dafe4bad425, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyMoveSpeed: 1
+  moveSpeed: 1
   chaseRange: 5
   attackRange: 1.5
+  attackStopRange: 0.8
   attackCooldown: 1
-  attackDamage: 10
+  attackDamage: 3
   maxHealth: 50
   healthUI: {fileID: 4780210754882579243}
   healthBarCanvas: {fileID: 5872154686723275970}
+  soulItemPrefab: {fileID: 9033039578752081814, guid: b871a173a38402e42834ddc190734cfd,
+    type: 3}
+  healthItemPrefab: {fileID: 3495018539274669416, guid: 66c69fe9e6c896b478ce2ca00d3b9097,
+    type: 3}
+  damageBuffItemPrefab: {fileID: 6771973020621596033, guid: 0d5c6f2fea251844cae6e5d885469a42,
+    type: 3}
+  healthDropChance: 0.3
+  buffDropChance: 0.2
 --- !u!95 &1383025198859396295
 Animator:
   serializedVersion: 7

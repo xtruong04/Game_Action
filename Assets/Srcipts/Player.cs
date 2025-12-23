@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public class Player : MonoBehaviour
 {
@@ -25,6 +26,10 @@ public class Player : MonoBehaviour
 
     [Header("UI Settings")]
     [SerializeField] private PlayerHealthUI healthUI;
+    [SerializeField] private GameOverUI gameOverUI;
+
+    public int soulCount = 0;          // số soul hiện tại
+    public int soulsRequired = 0;      // số soul cần để triệu hồi boss
 
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -140,13 +145,41 @@ public class Player : MonoBehaviour
             Die();
         }
     }
+    // ===== Heal =====
+    public void Heal(int amount)
+    {
+        currentHealth += amount;
+        if (currentHealth > maxHealth)
+            currentHealth = maxHealth;
 
+        healthUI.SetHealth(currentHealth);
+        Debug.Log("Player healed. Current HP: " + currentHealth);
+    }
+
+    // ===== Damage Buff =====
+    public IEnumerator DamageBuff(int extraDamage, float duration)
+    {
+        attackDamage += extraDamage;
+        Debug.Log("Damage buffed! Current damage: " + attackDamage);
+
+        yield return new WaitForSeconds(duration);
+
+        attackDamage -= extraDamage;
+        Debug.Log("Damage buff ended. Current damage: " + attackDamage);
+    }
+
+    public void AddSoul(int amount)
+    {
+        soulCount += amount;
+
+       
+    }
     private void Die()
     {
         animator.SetTrigger("Die");
-        Debug.Log("Player has died!");
-        // Thêm logic Game Over tại đây
+        gameOverUI.ShowGameOver();
     }
+
 
     private void OnDrawGizmosSelected()
     {

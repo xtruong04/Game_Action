@@ -57,17 +57,20 @@ TagManager:
   - name: Player
     uniqueID: 3674405673
     locked: 0
-  - name: Tree
-    uniqueID: 2491144387
+  - name: Enemy
+    uniqueID: 770088983
     locked: 0
   - name: New Layer 7
     uniqueID: 666134437
     locked: 0
-  - name: Enemy
-    uniqueID: 770088983
-    locked: 0
   - name: HealthBar
     uniqueID: 2217314411
+    locked: 0
+  - name: UI
+    uniqueID: 612141799
+    locked: 0
+  - name: Tree
+    uniqueID: 2491144387
     locked: 0
   m_RenderingLayers:
   - Default
