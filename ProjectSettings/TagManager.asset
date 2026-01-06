@@ -72,5 +72,8 @@ TagManager:
   - name: Tree
     uniqueID: 2491144387
     locked: 0
+  - name: Light
+    uniqueID: 3462119367
+    locked: 0
   m_RenderingLayers:
   - Default
